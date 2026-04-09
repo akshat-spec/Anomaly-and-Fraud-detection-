@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🛡️ Antigravity: Real-Time Fraud Detection Platform</h1>
+  <h1> Real-Time Fraud Detection Platform</h1>
   <p><b>An end-to-end, sub-100ms machine learning pipeline tracking and isolating financial anomalies securely.</b></p>
   
   [![Python](https://img.shields.io/badge/Python-3.11-3776AB.svg?style=flat&logo=python&logoColor=white)](https://www.python.org)
