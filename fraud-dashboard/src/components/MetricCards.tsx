@@ -76,20 +76,27 @@ export const MetricCards: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
       {cards.map((c, i) => (
-        <div key={i} className={`flex flex-col bg-[#111111] border ${c.border} rounded-xl p-5 shadow-lg group hover:border-gray-600 transition-colors`}>
-          <div className="flex items-start justify-between">
-            <h3 className="text-gray-400 text-sm font-medium">{c.title}</h3>
-            <div className={`p-2 rounded-lg ${c.bg}`}>
+        <div key={i} className={`relative overflow-hidden flex flex-col bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 shadow-2xl transition-all duration-300 hover:scale-[1.02] hover:border-white/10 group`}>
+          {/* Subtle Background Glow */}
+          <div className={`absolute -right-4 -top-4 w-24 h-24 blur-[60px] opacity-20 ${c.bg} transition-opacity group-hover:opacity-40`}></div>
+          
+          <div className="flex items-start justify-between relative z-10">
+            <div>
+              <h3 className="text-gray-500 text-xs font-bold uppercase tracking-widest">{c.title}</h3>
+              <div className="mt-4 flex items-baseline gap-2">
+                <span className="text-4xl font-bold text-white tracking-tighter">{c.value}</span>
+              </div>
+            </div>
+            <div className={`p-3 rounded-xl ${c.bg} border ${c.border} shadow-inner`}>
               {c.icon}
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-3xl font-bold text-gray-100 tracking-tight">{c.value}</span>
-          </div>
-          <div className="mt-2">
-            <span className="text-xs text-gray-500 font-medium">{c.subtitle}</span>
+          
+          <div className="mt-6 flex items-center gap-2 relative z-10">
+            <div className={`w-1.5 h-1.5 rounded-full ${c.bg.replace('/10', '/80')}`}></div>
+            <span className="text-[11px] text-gray-400 font-medium tracking-tight uppercase">{c.subtitle}</span>
           </div>
         </div>
       ))}

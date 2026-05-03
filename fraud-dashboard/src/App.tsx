@@ -10,24 +10,27 @@ function App() {
     <div className="min-h-screen bg-[#050505] text-gray-200 font-sans selection:bg-purple-500/30">
       
       {/* Top Navbar */}
-      <nav className="sticky top-0 z-50 bg-[#0a0a0a]/80 backdrop-blur-md border-b border-gray-800/80 px-6 py-3 shadow-xl flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-purple-600 to-blue-500 p-1.5 rounded-lg shadow-lg">
-            <ShieldCheck size={20} className="text-white" />
+      <nav className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-2 rounded-xl shadow-lg shadow-purple-500/20">
+            <ShieldCheck size={24} className="text-white" />
           </div>
-          <h1 className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400 tracking-tight">
-            Antigravity Fraud Intelligence
-          </h1>
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              Fraud Detection
+            </h1>
+            <p className="text-[10px] text-purple-400 font-bold tracking-[0.2em] uppercase">Intelligence Platform</p>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1 bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-semibold rounded-md flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <div className="px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold rounded-full flex items-center gap-2 tracking-wider">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 bg-red-400"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
-            LIVE
+            SYSTEM LIVE
           </div>
-          <div className="h-6 w-8 rounded bg-gray-800 border border-gray-700 animate-pulse hidden sm:block"></div>
+          <div className="w-8 h-8 rounded-full bg-gradient-to-b from-gray-700 to-gray-900 border border-white/10 hidden sm:block"></div>
         </div>
       </nav>
 

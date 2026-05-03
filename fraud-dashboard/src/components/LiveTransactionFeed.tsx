@@ -52,51 +52,53 @@ export const LiveTransactionFeed: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-[500px] w-full bg-[#111111] border border-gray-800 rounded-xl overflow-hidden shadow-2xl">
-      <div className="flex items-center justify-between p-4 border-b border-gray-800 bg-[#161616]">
-        <div className="flex items-center gap-3">
-          <div className="relative flex h-3 w-3">
+    <div className="flex flex-col h-[500px] w-full bg-[#0a0a0a] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="flex items-center justify-between p-5 border-b border-white/5 bg-black/40 backdrop-blur-md">
+        <div className="flex items-center gap-4">
+          <div className="relative flex h-2.5 w-2.5">
             <span className={cn("animate-ping absolute inline-flex h-full w-full rounded-full opacity-75", isConnected ? "bg-emerald-400" : "bg-red-400")}></span>
-            <span className={cn("relative inline-flex rounded-full h-3 w-3", isConnected ? "bg-emerald-500" : "bg-red-500")}></span>
+            <span className={cn("relative inline-flex rounded-full h-2.5 w-2.5", isConnected ? "bg-emerald-500" : "bg-red-500")}></span>
           </div>
-          <h2 className="text-gray-100 font-semibold tracking-tight">Live Firehose</h2>
-          <span className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded-md font-mono">{filteredMessages.length} events</span>
+          <div>
+            <h2 className="text-white text-sm font-bold tracking-tight">Live Firehose</h2>
+            <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wider">{filteredMessages.length} Signal Stream</p>
+          </div>
         </div>
         
-        <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer hover:text-gray-200 transition-colors">
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-[11px] text-gray-400 cursor-pointer hover:text-white transition-colors">
             <input 
               type="checkbox" 
               checked={showFraudOnly} 
               onChange={() => setShowFraudOnly(!showFraudOnly)} 
-              className="rounded bg-gray-900 border-gray-700 text-purple-500 focus:ring-purple-500/20"
+              className="rounded-sm bg-black border-white/10 text-indigo-500 focus:ring-indigo-500/20 w-3.5 h-3.5"
             />
-            Fraud Only
+            FRAUD ONLY
           </label>
-          <div className="h-4 w-px bg-gray-800 mx-1 border-gray-700"></div>
+          <div className="h-4 w-px bg-white/10"></div>
           <button 
             onClick={togglePause} 
-            className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md transition-colors"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg border border-white/5 transition-all active:scale-95"
           >
-            {isPaused ? <Play size={14} className="text-emerald-400" /> : <Pause size={14} className="text-amber-400" />}
+            {isPaused ? <Play size={12} className="fill-emerald-400 text-emerald-400" /> : <Pause size={12} className="fill-amber-400 text-amber-400" />}
             {isPaused ? "Resume" : "Pause"}
           </button>
         </div>
       </div>
 
-      <div className="flex-1 bg-[#0a0a0a]">
+      <div className="flex-1 bg-black">
         {filteredMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-600 animate-pulse">
-            <Activity size={32} className="mb-3 opacity-20" />
-            <p className="text-sm tracking-widest uppercase">Listening for signals...</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-700 animate-pulse">
+            <Activity size={40} className="mb-4 opacity-10" />
+            <p className="text-xs font-bold tracking-[0.3em] uppercase opacity-40">Awaiting Signal...</p>
           </div>
         ) : (
           <List
             height={435}
             itemCount={filteredMessages.length}
-            itemSize={60}
+            itemSize={64}
             width="100%"
-            className="scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent"
+            className="scrollbar-thin scrollbar-thumb-white/5 scrollbar-track-transparent"
           >
             {Row}
           </List>
