@@ -16,4 +16,8 @@ redis==5.0.3
 sqlalchemy[asyncio]==2.0.28
 asyncpg==0.29.0
 pyspark==3.5.1
-python-dotenv==1.0.1
+# ─── API & Web ──────────────────────────────────────────────────
+fastapi==0.110.0
+uvicorn==0.27.1
+prometheus-fastapi-instrumentator==7.0.0
+python-multipart==0.0.9
