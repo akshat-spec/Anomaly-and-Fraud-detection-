@@ -3,6 +3,9 @@
 import logging
 import os
 import time
+import asyncio
+import random
+import uuid
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -40,10 +43,35 @@ logger = logging.getLogger("fraud_api.main")
 START_TIME = time.time()
 
 
+# Background Simulator for Demo
+async def transaction_simulator():
+    """Simulates real-time transactions when connections are active."""
+    while True:
+        if manager.active_connections:
+            # Generate a mock transaction
+            is_fraud = random.random() < 0.05
+            mock_res = {
+                "transaction_id": str(uuid.uuid4()),
+                "user_id": f"user_{random.randint(1000, 9999)}",
+                "fraud": is_fraud,
+                "confidence": random.uniform(0.7, 0.99) if is_fraud else random.uniform(0.01, 0.3),
+                "xgb_score": random.random(),
+                "iso_score": -1 if is_fraud else 1,
+                "latency_ms": random.uniform(15, 60),
+                "amount": random.uniform(10, 5000),
+                "cached": False
+            }
+            await manager.broadcast(mock_res)
+        await asyncio.sleep(2) # New event every 2 seconds
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load ML models on startup and tear down connections on shutdown."""
     logger.info("Initializing FastAPI Fraud Inference server...")
+    
+    # Start the simulator as a background task
+    simulator_task = asyncio.create_task(transaction_simulator())
     
     try:
         # Load models globally into state
@@ -56,6 +84,7 @@ async def lifespan(app: FastAPI):
 
     yield
     
+    simulator_task.cancel()
     logger.info("Tearing down database and Redis connections...")
     await redis_client.close()
 

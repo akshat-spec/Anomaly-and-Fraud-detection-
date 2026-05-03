@@ -1,11 +1,20 @@
+import { useState } from "react";
 import { ShieldCheck, Activity, LayoutDashboard, Bell, Brain, FileText, Code } from "lucide-react";
 import { LiveTransactionFeed } from "./components/LiveTransactionFeed";
 import { FraudRateChart } from "./components/FraudRateChart";
 import { MetricCards } from "./components/MetricCards";
 import { AlertPanel } from "./components/AlertPanel";
 import { ModelHealth } from "./components/ModelHealth";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 function App() {
+  const [activeTab, setActiveTab] = useState<'overview' | 'alerts' | 'models'>('overview');
+
   return (
     <div className="min-h-screen bg-[#050505] text-slate-200 font-sans antialiased selection:bg-indigo-500/30">
       {/* Premium Industrial Header */}
@@ -29,15 +38,24 @@ function App() {
           <div className="hidden md:flex h-8 w-px bg-white/10"></div>
           
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#" className="flex items-center gap-2 text-xs font-bold text-white tracking-widest uppercase border-b-2 border-indigo-500 pb-0.5">
+            <button 
+              onClick={() => setActiveTab('overview')}
+              className={cn("flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all pb-0.5 border-b-2", activeTab === 'overview' ? "text-white border-indigo-500" : "text-slate-500 border-transparent hover:text-white")}
+            >
               <LayoutDashboard size={14} /> Overview
-            </a>
-            <a href="#" className="flex items-center gap-2 text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">
+            </button>
+            <button 
+              onClick={() => setActiveTab('alerts')}
+              className={cn("flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all pb-0.5 border-b-2", activeTab === 'alerts' ? "text-white border-indigo-500" : "text-slate-500 border-transparent hover:text-white")}
+            >
               <Bell size={14} /> Alerts
-            </a>
-            <a href="#" className="flex items-center gap-2 text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">
+            </button>
+            <button 
+              onClick={() => setActiveTab('models')}
+              className={cn("flex items-center gap-2 text-xs font-bold tracking-widest uppercase transition-all pb-0.5 border-b-2", activeTab === 'models' ? "text-white border-indigo-500" : "text-slate-500 border-transparent hover:text-white")}
+            >
               <Brain size={14} /> Models
-            </a>
+            </button>
           </nav>
         </div>
 
@@ -62,48 +80,86 @@ function App() {
           <p className="text-slate-500 text-sm font-medium">Real-time inference monitoring and anomaly detection engine.</p>
         </div>
 
-        {/* Dashboard Grid */}
+        {/* Dashboard Content Switching */}
         <div className="grid grid-cols-12 gap-8">
           
-          {/* Key Performance Indicators */}
-          <div className="col-span-12">
-            <MetricCards />
-          </div>
-
-          {/* Core Monitoring Area */}
-          <div className="col-span-12 lg:col-span-8 space-y-8">
-            <div className="glass-card rounded-3xl overflow-hidden">
-              <LiveTransactionFeed />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-8">
-              <div className="col-span-2 md:col-span-1">
-                <AlertPanel />
+          {activeTab === 'overview' && (
+            <>
+              {/* Key Performance Indicators */}
+              <div className="col-span-12">
+                <MetricCards />
               </div>
-              <div className="col-span-2 md:col-span-1">
-                <FraudRateChart />
-              </div>
-            </div>
-          </div>
 
-          {/* Sidebar / Health Area */}
-          <div className="col-span-12 lg:col-span-4 space-y-8">
-            <ModelHealth />
-            
-            {/* Quick Actions / Help Card */}
-            <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 rounded-3xl p-8 relative overflow-hidden group">
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold text-white mb-4">Need Assistance?</h3>
-                <p className="text-slate-300 text-sm mb-6 leading-relaxed">
-                  Our system is currently processing thousands of signals per second. Check our documentation for tuning thresholds.
+              {/* Core Monitoring Area */}
+              <div className="col-span-12 lg:col-span-8 space-y-8">
+                <div className="glass-card rounded-3xl overflow-hidden">
+                  <LiveTransactionFeed />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="col-span-2 md:col-span-1">
+                    <AlertPanel />
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <FraudRateChart />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sidebar / Health Area */}
+              <div className="col-span-12 lg:col-span-4 space-y-8">
+                <ModelHealth />
+                
+                {/* Quick Actions / Help Card */}
+                <div className="bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 rounded-3xl p-8 relative overflow-hidden group">
+                  <div className="relative z-10">
+                    <h3 className="text-xl font-bold text-white mb-4">Need Assistance?</h3>
+                    <p className="text-slate-300 text-sm mb-6 leading-relaxed">
+                      Our system is currently processing thousands of signals per second. Check our documentation for tuning thresholds.
+                    </p>
+                    <button className="flex items-center justify-center gap-3 w-full px-6 py-3 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all active:scale-95">
+                      <FileText size={16} /> View Documentation
+                    </button>
+                  </div>
+                  <Activity className="absolute -right-8 -bottom-8 w-48 h-48 text-indigo-500/10 -rotate-12 group-hover:scale-110 transition-transform duration-700" />
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'alerts' && (
+            <div className="col-span-12 space-y-8">
+              <div className="glass-card rounded-3xl p-10 flex flex-col items-center justify-center min-h-[400px]">
+                <Bell size={64} className="text-indigo-500 mb-6 opacity-20" />
+                <h3 className="text-2xl font-bold text-white mb-2">Advanced Alerts Manager</h3>
+                <p className="text-slate-500 text-center max-w-md">
+                  In production, this area manages escalation policies and notification channels (Slack, PagerDuty).
                 </p>
-                <button className="flex items-center justify-center gap-3 w-full px-6 py-3 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all active:scale-95">
-                  <FileText size={16} /> View Documentation
-                </button>
+                <div className="mt-8">
+                  <AlertPanel />
+                </div>
               </div>
-              <Activity className="absolute -right-8 -bottom-8 w-48 h-48 text-indigo-500/10 -rotate-12 group-hover:scale-110 transition-transform duration-700" />
             </div>
-          </div>
+          )}
+
+          {activeTab === 'models' && (
+            <div className="col-span-12 space-y-8">
+               <div className="grid grid-cols-2 gap-8">
+                  <div className="col-span-2 md:col-span-1">
+                    <ModelHealth />
+                  </div>
+                  <div className="col-span-2 md:col-span-1">
+                    <div className="glass-card rounded-3xl p-10 flex flex-col items-center justify-center h-full">
+                      <Brain size={64} className="text-purple-500 mb-6 opacity-20" />
+                      <h3 className="text-2xl font-bold text-white mb-2">Model Versioning</h3>
+                      <p className="text-slate-500 text-center">
+                        Active: <span className="text-emerald-400 font-mono">fraud_ensemble_v1.0.4</span>
+                      </p>
+                    </div>
+                  </div>
+               </div>
+            </div>
+          )}
 
         </div>
       </main>
