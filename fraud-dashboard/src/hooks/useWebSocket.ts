@@ -1,7 +1,23 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { TransactionEvent } from "../types";
 
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws/transactions";
+const getWsUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    // Convert https://... to wss://... and http://... to ws://...
+    return apiUrl.replace(/^http/, 'ws') + "/ws/transactions";
+  }
+  
+  // Fallback to current host if in production
+  if (import.meta.env.PROD) {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws/transactions`;
+  }
+  
+  return "ws://localhost:8000/ws/transactions";
+};
+
+const WS_URL = getWsUrl();
 
 export const useWebSocket = () => {
   const [messages, setMessages] = useState<TransactionEvent[]>([]);
