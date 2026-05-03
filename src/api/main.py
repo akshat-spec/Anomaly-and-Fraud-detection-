@@ -4,14 +4,35 @@ import logging
 import os
 import time
 from contextlib import asynccontextmanager
+from typing import List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.middleware.latency import LatencyLoggingMiddleware
 from src.api.routes import predict
 from src.feature_store import redis_client
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def relog_connection(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: dict):
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                pass
+
+manager = ConnectionManager()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("fraud_api.main")
@@ -52,7 +73,18 @@ app.add_middleware(LatencyLoggingMiddleware)
 # Expose generic p50, p95, p99 endpoint latency timings automatically via prometheus-fastapi-instrumentator
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
+@app.websocket("/ws/transactions")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.relog_connection(websocket)
+    try:
+        while True:
+            # Keep connection alive
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
 app.include_router(predict.router)
+app.state.manager = manager
 
 
 @app.get("/health")

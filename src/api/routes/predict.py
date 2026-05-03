@@ -133,4 +133,10 @@ async def predict_fraud(txn: TransactionRequest, request: Request):
     await r.set(cache_key, res.model_dump_json(), ex=300)
 
     res.latency_ms = (time.perf_counter() - start_time) * 1000.0
+
+    # 8. Broadcast to Live Firehose
+    manager = getattr(request.app.state, "manager", None)
+    if manager:
+        await manager.broadcast(res.model_dump())
+
     return res

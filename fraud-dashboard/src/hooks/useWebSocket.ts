@@ -4,8 +4,8 @@ import type { TransactionEvent } from "../types";
 const getWsUrl = () => {
   const apiUrl = import.meta.env.VITE_API_URL;
   if (apiUrl) {
-    // Convert https://... to wss://... and http://... to ws://...
-    return apiUrl.replace(/^http/, 'ws') + "/ws/transactions";
+    const cleanUrl = apiUrl.replace(/\/$/, ''); // Remove trailing slash if present
+    return cleanUrl.replace(/^http/, 'ws') + "/ws/transactions";
   }
   
   // Fallback to current host if in production

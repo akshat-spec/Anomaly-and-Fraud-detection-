@@ -1,4 +1,4 @@
-import { ShieldCheck, Activity } from "lucide-react";
+import { ShieldCheck, Activity, LayoutDashboard, Bell, Brain, FileText, Code } from "lucide-react";
 import { LiveTransactionFeed } from "./components/LiveTransactionFeed";
 import { FraudRateChart } from "./components/FraudRateChart";
 import { MetricCards } from "./components/MetricCards";
@@ -29,9 +29,15 @@ function App() {
           <div className="hidden md:flex h-8 w-px bg-white/10"></div>
           
           <nav className="hidden md:flex items-center gap-6">
-            <a href="#" className="text-xs font-bold text-white tracking-widest uppercase border-b-2 border-indigo-500 pb-0.5">Overview</a>
-            <a href="#" className="text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">Alerts</a>
-            <a href="#" className="text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">Models</a>
+            <a href="#" className="flex items-center gap-2 text-xs font-bold text-white tracking-widest uppercase border-b-2 border-indigo-500 pb-0.5">
+              <LayoutDashboard size={14} /> Overview
+            </a>
+            <a href="#" className="flex items-center gap-2 text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">
+              <Bell size={14} /> Alerts
+            </a>
+            <a href="#" className="flex items-center gap-2 text-xs font-bold text-slate-500 tracking-widest uppercase hover:text-white transition-colors">
+              <Brain size={14} /> Models
+            </a>
           </nav>
         </div>
 
@@ -91,8 +97,8 @@ function App() {
                 <p className="text-slate-300 text-sm mb-6 leading-relaxed">
                   Our system is currently processing thousands of signals per second. Check our documentation for tuning thresholds.
                 </p>
-                <button className="px-6 py-3 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all active:scale-95">
-                  View Documentation
+                <button className="flex items-center justify-center gap-3 w-full px-6 py-3 bg-white text-black font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all active:scale-95">
+                  <FileText size={16} /> View Documentation
                 </button>
               </div>
               <Activity className="absolute -right-8 -bottom-8 w-48 h-48 text-indigo-500/10 -rotate-12 group-hover:scale-110 transition-transform duration-700" />
@@ -115,7 +121,11 @@ function App() {
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Models: Loaded</span>
           </div>
         </div>
-        <div className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em]">
+          <div className="flex items-center gap-1 text-indigo-400">
+            <Code size={12} /> Made by Akshat
+          </div>
+          <div className="w-px h-3 bg-white/10"></div>
           &copy; 2026 Intelligence Corp
         </div>
       </footer>
