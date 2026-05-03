@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Activity } from "lucide-react";
 import { LiveTransactionFeed } from "./components/LiveTransactionFeed";
 import { FraudRateChart } from "./components/FraudRateChart";
 import { MetricCards } from "./components/MetricCards";
