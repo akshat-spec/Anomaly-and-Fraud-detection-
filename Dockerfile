@@ -1,48 +1,41 @@
-# Build Stage
-FROM python:3.11-slim AS builder
+# Stage 1: Builder
+FROM python:3.11-slim as builder
 
 WORKDIR /app
-
-# Upgrade pip and install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    librdkafka-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
 
-# Install dependencies into a virtual environment
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev && \
+    pip install --user --no-cache-dir -r requirements.txt && \
+    apt-get purge -y --auto-remove gcc python3-dev && \
+    rm -rf /var/lib/apt/lists/*
 
-# Final Runtime Stage
+# Stage 2: Runtime
 FROM python:3.11-slim
+
+# Create a non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /app
 
-# Install runtime minimal dependencies natively for confluent-kafka
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    librdkafka1 \
-    && rm -rf /var/lib/apt/lists/*
+# Copy dependencies from builder
+COPY --from=builder /root/.local /home/appuser/.local
 
-# Copy virtual environment natively
-COPY --from=builder /opt/venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Add local bin to PATH
+ENV PATH=/home/appuser/.local/bin:$PATH
 
-# Copy source maps & pre-built models securely
+# Copy application files
 COPY src/ /app/src/
 COPY models/ /app/models/
+COPY pyproject.toml /app/
 
-# Secure execution privileges via non-root limits safely
-RUN useradd -m appuser && chown -R appuser:appuser /app
+RUN chown -R appuser:appuser /app
+
 USER appuser
 
 EXPOSE 8000
 
-# API Health Check tracking limits dynamically
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
+# Health check instruction
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+  CMD python -c "import urllib.request; import os; port = os.environ.get('PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/health')" || exit 1
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD sh -c "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"

@@ -2,21 +2,21 @@ version: '3.8'
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    container_name: zookeeper
+    image: confluentinc/cp-zookeeper:7.4.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
-    healthcheck:
-      test: ["CMD-SHELL", "echo ruok | bash -c 'cat > /dev/tcp/localhost/2181'"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    ports:
+      - "2181:2181"
     restart: unless-stopped
+    healthcheck:
+      test: echo stat | nc localhost 2181
+      interval: 10s
+      timeout: 10s
+      retries: 3
 
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    container_name: kafka
+    image: confluentinc/cp-kafka:7.4.0
     depends_on:
       zookeeper:
         condition: service_healthy
@@ -29,66 +29,49 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 15s
+      test: nc -z localhost 9092 || exit 1
+      interval: 10s
       timeout: 10s
-      retries: 5
-    volumes:
-      - kafka_data:/var/lib/kafka/data
-    restart: unless-stopped
-
-  kafdrop:
-    image: obsidiandynamics/kafdrop:latest
-    container_name: kafdrop
-    depends_on:
-      kafka:
-        condition: service_healthy
-    ports:
-      - "9000:9000"
-    environment:
-      KAFKA_BROKERCONNECT: "kafka:29092"
-    restart: unless-stopped
+      retries: 3
 
   redis:
     image: redis:7-alpine
-    container_name: fraud-redis
     ports:
       - "6379:6379"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
+      interval: 10s
+      timeout: 5s
       retries: 3
-    restart: unless-stopped
 
   postgres:
     image: postgres:15-alpine
-    container_name: fraud-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-fraud_db}
     ports:
       - "5432:5432"
-    env_file:
-      - .env
-    environment:
-      POSTGRES_DB: fraud_detection
-      POSTGRES_USER: fraud
-      POSTGRES_PASSWORD: password    
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud_detection"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 5
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
 
   fastapi-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: fraud-fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-fraud_db}
     depends_on:
       kafka:
         condition: service_healthy
@@ -96,48 +79,34 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    environment:
-      REDIS_URL: redis://redis:6379/0
-      DATABASE_URL: postgresql+asyncpg://fraud:password@postgres:5432/fraud_detection
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    restart: unless-stopped
-
-  spark-worker:
-    image: python:3.11-slim
-    container_name: spark-aggregator
-    depends_on:
-      kafka:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    env_file:
-      - .env
-    environment:
-      REDIS_URL: redis://redis:6379/1
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-    volumes:
-      - ./src:/app/src
-    working_dir: /app
-    command: >
-      bash -c "apt-get update && apt-get install -y default-jre && pip install pyspark==3.5.0 redis confluent-kafka python-dotenv && spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 /app/src/streaming/spark_aggregator.py"
     restart: unless-stopped
 
   fraud-dashboard:
     build:
       context: ./fraud-dashboard
       dockerfile: Dockerfile
-    container_name: fraud-dashboard
-    depends_on:
-      fastapi-app:
-        condition: service_healthy
     ports:
       - "3000:3000"
+    depends_on:
+      fastapi-app:
+        condition: service_started
     restart: unless-stopped
 
-volumes:
-  kafka_data:
-  postgres_data:
+  spark-worker:
+    image: bitnami/spark:3.4
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    restart: unless-stopped
+
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped

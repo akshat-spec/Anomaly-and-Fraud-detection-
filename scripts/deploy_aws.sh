@@ -1,75 +1,83 @@
 #!/bin/bash
 set -e
 
-# ==============================================================================
-# AWS EC2 Automate Deployment Script for Antigravity Fraud Pipeline
-# Base Image: Amazon Linux 2023
-# ==============================================================================
-
-DOMAIN="fraud-demo.antigravity.dev"
-REPO_URL="https://github.com/username/fraud-detection.git"
+# Configuration
+REPO_URL="https://github.com/akshat-spec/Anomaly-and-Fraud-detection-.git"
 APP_DIR="/opt/fraud-detection"
+DOMAIN="yourdomain.com"
+EMAIL="admin@yourdomain.com"
 
-# 1. System Update & Dependencies natively mapping components gracefully
-echo "Updating systems matching requirements explicitly..."
-dnf update -y
-dnf install -y git jq curl
+echo "Starting deployment for Amazon Linux 2023..."
 
-# 2. Install Docker & Docker Compose natively dynamically
-echo "Installing Docker Engine natively securely..."
-dnf install -y docker
-systemctl enable docker
-systemctl start docker
-usermod -aG docker ec2-user
+# 1. System Updates and Dependencies
+sudo dnf update -y
+sudo dnf install -y git jq wget curl certbot
 
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# 2. Install Docker
+if ! command -v docker &> /dev/null; then
+    sudo dnf install -y docker
+    sudo systemctl enable --now docker
+    sudo usermod -aG docker ec2-user
+fi
 
-# 3. Code Checkout securely
-echo "Cloning Repository safely smoothly..."
+# 3. Install Docker Compose
+if ! command -v docker-compose &> /dev/null; then
+    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+fi
+
+# 4. Clone Repository
 if [ ! -d "$APP_DIR" ]; then
-    git clone $REPO_URL $APP_DIR
+    sudo git clone "$REPO_URL" "$APP_DIR"
+    sudo chown -R ec2-user:ec2-user "$APP_DIR"
 else
-    cd $APP_DIR && git pull origin main
+    cd "$APP_DIR"
+    git pull origin main
 fi
-cd $APP_DIR
 
-# 4. Environment Variables organically mapping bounds exclusively
-echo "Initializing environments securely..."
-if [ ! -f .env ]; then
+cd "$APP_DIR"
+
+# 5. Environment Variables
+if [ ! -f ".env" ]; then
     cp .env.example .env
-    echo ".env seamlessly mapping default limits dynamically instantiated"
+    echo "Created .env file. Please update the variables if necessary."
 fi
 
-# 5. Execute Core Containers explicitly deploying seamlessly 
-echo "Launching Core Analytics Matrix safely gracefully..."
-docker-compose up -d --build
+# 6. SSL Configuration (Let's Encrypt)
+# Assuming Nginx proxy container or standalone Certbot if port 80 is free
+if [ "$DOMAIN" != "yourdomain.com" ]; then
+    sudo certbot certonly --standalone -d "$DOMAIN" --non-interactive --agree-tos -m "$EMAIL"
+    # Copy certs to a location accessible by docker
+    sudo mkdir -p "$APP_DIR/certs"
+    sudo cp /etc/letsencrypt/live/"$DOMAIN"/fullchain.pem "$APP_DIR/certs/"
+    sudo cp /etc/letsencrypt/live/"$DOMAIN"/privkey.pem "$APP_DIR/certs/"
+    sudo chown -R ec2-user:ec2-user "$APP_DIR/certs"
+    echo "SSL Certificates generated."
+fi
 
-# 6. Certbot / SSL Generation
-echo "Requesting SSL bindings intrinsically mapping configurations securely..."
-dnf install -y certbot
-certbot certonly --standalone -d $DOMAIN --non-interactive --agree-tos -m admin@$DOMAIN
+# 7. Start Application
+docker-compose build
+docker-compose up -d
 
-# 7. Systemd Persistence explicit configuration mapped gracefully bounds completely
-cat <<EOF > /etc/systemd/system/fraud-pipeline.service
+# 8. Setup Systemd Service for Auto-Restart
+SERVICE_FILE="/etc/systemd/system/fraud-detection.service"
+sudo bash -c "cat > $SERVICE_FILE" <<EOF
 [Unit]
-Description=Antigravity Fraud Intelligence Pipeline
+Description=Fraud Detection System
 Requires=docker.service
 After=docker.service
 
 [Service]
-Type=oneshot
-RemainAfterExit=yes
+Restart=always
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/local/bin/docker-compose up -d
+ExecStart=/usr/local/bin/docker-compose up
 ExecStop=/usr/local/bin/docker-compose down
-TimeoutStartSec=0
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-systemctl daemon-reload
-systemctl enable fraud-pipeline.service
+sudo systemctl daemon-reload
+sudo systemctl enable fraud-detection.service
 
-echo "Deployment mapping conclusively completed dynamically!"
+echo "Deployment complete! Application is running."

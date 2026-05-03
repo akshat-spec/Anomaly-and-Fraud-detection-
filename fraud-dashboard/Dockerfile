@@ -1,34 +1,28 @@
-# Stage 1: Build the React Application safely using node
-FROM node:20-alpine AS builder
+# Stage 1: Build React Application
+FROM node:20-alpine as builder
 
 WORKDIR /app
-
-# Explicitly copy deps securely
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Copy logic mappings
+COPY package*.json ./
+RUN npm install
 COPY . .
-
-# Generate optimized bundled definitions 
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-# Stage 2: Serve standard HTTP via optimized NGINX layer natively
+# Stage 2: Serve via Nginx
 FROM nginx:alpine
 
-# Purge default configurations organically 
-RUN rm -rf /usr/share/nginx/html/* && rm /etc/nginx/conf.d/default.conf
+# Remove default nginx configuration
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Map build targets explicitly
+# Copy custom nginx config template
+COPY default.conf.template /etc/nginx/templates/default.conf.template
+
+# Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Layer explicit configurations implicitly directing logic paths proxying correctly
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 3000
-
-# Validate core service listening organically checking generic 200 codes dynamically
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:3000 || exit 1
+# We use the port provided by Railway dynamically
+ENV PORT=80
+EXPOSE $PORT
 
 CMD ["nginx", "-g", "daemon off;"]
